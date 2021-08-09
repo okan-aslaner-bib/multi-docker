@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t oaslaner/react-test -f ./client/Dockerfile.dev ./client/Dockerfile.dev
+
+script:
+  - docker run oaslaner/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t oaslaner/multi-client ./client
+  - docker build -t oaslaner/multi-nginx ./nginx
+  - docker build -t oaslaner/multi-server ./server
+  - docker build -t oaslaner/multi-worker ./worker
+  # Log into the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push oaslaner/multi-client
+  - docker push oaslaner/multi-nginx
+  - docker push oaslaner/multi-server
+  - docker push oaslaner/multi-worker
